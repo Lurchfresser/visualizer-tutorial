@@ -6,35 +6,62 @@ canvas.height = window.innerHeight;
 /**
  * @type {CanvasRenderingContext2D}
  */
-const ctx = canvas.getContext('2d');
-/**
- * @type {MediaElementAudioSourceNode}
- */
-let audioSource;
-/**
- * @type {AnalyserNode}
- */
-let analyser;
+const drawCtx = canvas.getContext('2d');
+
+
+
 
 
 /**
      * @type {HTMLAudioElement}
      */
 const audioElement = document.querySelector('#audio');
-audioElement.src = 'overthinker-full.mp3';
 //let audio = new Audio('overthinker.mp3');
-const audioCtx = new AudioContext();
+/**
+ * @type {AudioContext}
+ */
+const audioCtxRealSong = new AudioContext();
 
-audioElement.play();
-audioSource = audioCtx.createMediaElementSource(audioElement);
-analyser = audioCtx.createAnalyser();
+// audioElement.play();
+/**
+ * @type {MediaElementAudioSourceNode}
+ */
+let audioSource = audioCtxRealSong.createMediaElementSource(audioElement);
+/**
+ * @type {AnalyserNode}
+ */
+let analyser = audioCtxRealSong.createAnalyser();
 audioSource.connect(analyser);
-analyser.connect(audioCtx.destination);
+
+
+/**
+ * @type {HTMLAudioElement}
+ */
+let fakeAudioElement = document.getElementById('fakeAudio');
+/**
+ * @type {AudioContext}
+ */
+let fakeAudioCtx = new AudioContext();
+/**
+ * @type {MediaElementAudioSourceNode}
+ */
+let fakeAudioSource = fakeAudioCtx.createMediaElementSource(fakeAudioElement);
+/**
+ * @type {AnalyserNode}
+ */
+let fakeAnalyser = fakeAudioCtx.createAnalyser();
+
+
+fakeAudioElement.destination = fakeAudioCtx.destination;
+
+fakeAudioSource.connect(fakeAnalyser);
+//fakeAnalyser.connect(fakeAudioCtx.destination);
+
+analyser.connect(audioCtxRealSong.destination);
 analyser.fftSize = 64;
 
 
 container.addEventListener('click', () => {
-    
     const bufferLength = analyser.frequencyBinCount;
     const dataArray = new Uint8Array(bufferLength);
 
@@ -43,15 +70,15 @@ container.addEventListener('click', () => {
 
     function animate() {
         let x = 0;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        analyser.getByteFrequencyData(dataArray);
+        drawCtx.clearRect(0, 0, canvas.width, canvas.height);
+        fakeAnalyser.getByteFrequencyData(dataArray);
         for (let i = 0; i < bufferLength; i++) {
             barHeight = dataArray[i];
             const r = barHeight + (25 * (i / bufferLength));
             const g = 250 * (i / bufferLength);
             const b = 50;
-            ctx.fillStyle = `rgb(${r},${g},${b})`;
-            ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+            drawCtx.fillStyle = `rgb(${r},${g},${b})`;
+            drawCtx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
             x += barWidth;
         }
         requestAnimationFrame(animate);
